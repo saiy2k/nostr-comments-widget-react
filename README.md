@@ -1,3 +1,6 @@
+Stuck with an issue similar to https://stackoverflow.com/questions/50796458/crypto-createhmac-is-undefined-after-rollup
+Not able to get createHash from 'crypto' used in 'events' work with rollup!
+
 # nostr-comments-widget-react
 
 This is an embeddable nostr client that "just works".

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/saiy2k"
   },
-  "version": "0.1.28",
+  "version": "0.1.32",
   "description": "This is an embeddable nostr comment widget that \"just works\".",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

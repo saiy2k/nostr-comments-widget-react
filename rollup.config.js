@@ -19,18 +19,20 @@ export default [
       {
         file: "dist/cjs/index.js",
         format: "cjs",
-        sourcemap: true,
+        sourcemap: false,
       },
       {
         file: "dist/esm/index.js",
         format: "esm",
-        sourcemap: true,
+        sourcemap: false,
       },
     ],
     plugins: [
       peerDepsExternal(),
 
-      resolve(),
+      resolve({ 
+        preferBuiltins: false 
+      }),
       commonjs(),
       typescript({ tsconfig: "./tsconfig.json" }),
       postcss(),
