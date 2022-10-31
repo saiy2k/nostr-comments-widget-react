@@ -35,8 +35,8 @@ export default [
       typescript({ tsconfig: "./tsconfig.json" }),
       postcss(),
       json(),
-      nodePolyfills(),
 
+      nodePolyfills(),
     ],
   },
   {

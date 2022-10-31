@@ -32,27 +32,15 @@ const pool: any = relayPool()
 // Modal.setAppElement('#comment-widget');
 
 export default function NostrComments({relays = []}) {
-  console.log('1');
   const [comment, setComment] = useState<string>('')
-  console.log('2');
   const [hasNip07, setNip07] = useState<boolean>(false)
-  console.log('3');
   const [publicKey, setPublicKey] = useState(null)
-  console.log('4');
   const [events, setEvents] = useState({})
-  console.log('5');
   const [editable, setEditable] = useState<boolean>(true)
-  console.log('6');
   const [notices, setNotices] = useState<any[]>([])
-  console.log('7');
   const [metadata, setMetadata] = useState<any>({})
-  console.log('8');
   const [status, setStatus] = useState('idle');
-  console.log('9');
   const [modalIsOpen, setIsOpen] = React.useState(false);
-  console.log('10');
-  const infoRef = useRef(null)
-  console.log('11');
   const metasubRef = useRef<any>(null)
 
   let subtitle: any
@@ -277,6 +265,8 @@ export default function NostrComments({relays = []}) {
       tags: [['r', url]],
       content: comment
     }
+
+    console.log('comment to publish: ', comment);
 
     // we will sign this event using the nip07 extension if it was detected
     // otherwise it should just be signed automatically when we call .publish()
