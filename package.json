@@ -1,28 +1,47 @@
 {
-  "name": "nostr-comments-widget-react",
-  "version": "0.1.0",
-  "author": "fiatjaf",
-  "license": "MIT",
-  "repository": "https://github.com/fiatjaf/nostr-comments-widget-react",
-  "dependencies": {
-    "events": "^3.3.0",
-    "nostr-tools": "^0.23.3",
-    "react": "^18.1.0",
-    "uniq": "^1.0.1",
-    "use-array": "^1.0.0",
-    "use-boolean": "^1.0.1",
-    "use-computed-state": "^1.2.0",
-    "use-debounce": "^8.0.1"
+  "name": "@saiy2k/nostr-comments-widget-react",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/saiy2k"
   },
+  "version": "0.1.5",
+  "description": "This is an embeddable nostr comment widget that \"just works\".",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "rollup": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saiy2k/nostr-comments-widget-react.git"
+  },
+  "keywords": [
+    "nostr",
+    "comment",
+    "widget",
+    "plugin",
+    "react"
+  ],
+  "author": "fiatjaf, saiy2k",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/saiy2k/nostr-comments-widget-react/issues"
+  },
+  "homepage": "https://github.com/saiy2k/nostr-comments-widget-react#readme",
   "devDependencies": {
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "esbuild": "^0.14.11",
-    "esbuild-plugin-alias": "^0.2.1",
-    "eslint": "^8.6.0",
-    "eslint-plugin-babel": "^5.3.1",
-    "eslint-plugin-react": "^7.28.0",
-    "prettier": "^2.5.1",
-    "react-dom": "^18.1.0",
-    "readable-stream": "^3.6.0"
+    "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-typescript": "^9.0.2",
+    "@types/react": "^18.0.24",
+    "react": "^18.2.0",
+    "rollup": "^3.2.3",
+    "rollup-plugin-dts": "^5.0.0",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.4"
   }
 }
