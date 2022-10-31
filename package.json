@@ -1,6 +1,9 @@
 {
-  "name": "nostr-comments-widget-react",
-  "version": "0.1.1",
+  "name": "@saiy2k/nostr-comments-widget-react",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/saiy2k"
+  },
+  "version": "0.1.5",
   "description": "This is an embeddable nostr comment widget that \"just works\".",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
