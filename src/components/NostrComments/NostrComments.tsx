@@ -1,6 +1,5 @@
-import React, {useState, useEffect, useRef} from 'react'
+import React, {useState, useEffect, useRef, useMemo} from 'react'
 import useComputedState from 'use-computed-state'
-import useArray from 'use-array'
 import {useDebounce} from 'use-debounce'
 import uniq from 'uniq'
 import {generatePrivateKey, getPublicKey, relayPool} from 'nostr-tools'
@@ -13,7 +12,7 @@ import './NostrComments.css';
 
 import {normalizeURL, nameFromMetadata} from './util'
 
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
 
 const customStyles = {
   content: {
@@ -28,37 +27,35 @@ const customStyles = {
 };
 
 const url = normalizeURL(location.href)
-const pool = relayPool()
+const pool: any = relayPool()
 
-Modal.setAppElement('#comment-widget');
+// Modal.setAppElement('#comment-widget');
 
 export default function NostrComments({relays = []}) {
-  const [comment, setComment] = useState('')
-  const [hasNip07, setNip07] = useState(false)
+  console.log('1');
+  const [comment, setComment] = useState<string>('')
+  console.log('2');
+  const [hasNip07, setNip07] = useState<boolean>(false)
+  console.log('3');
   const [publicKey, setPublicKey] = useState(null)
+  console.log('4');
   const [events, setEvents] = useState({})
-  const [editable, setEditable] = useState(true)
-  const [notices, {push: pushNotice, filter: filterNotices}] = useArray([])
-  const [metadata, setMetadata] = useState({})
+  console.log('5');
+  const [editable, setEditable] = useState<boolean>(true)
+  console.log('6');
+  const [notices, setNotices] = useState<any[]>([])
+  console.log('7');
+  const [metadata, setMetadata] = useState<any>({})
+  console.log('8');
   const [status, setStatus] = useState('idle');
-  const infoRef = useRef(null)
-  const metasubRef = useRef(null)
-
-  let subtitle
+  console.log('9');
   const [modalIsOpen, setIsOpen] = React.useState(false);
+  console.log('10');
+  const infoRef = useRef(null)
+  console.log('11');
+  const metasubRef = useRef<any>(null)
 
-  function openModal() {
-    setIsOpen(true);
-  }
-
-  function afterOpenModal() {
-    // references are now sync'd and can be accessed.
-    subtitle.style.color = '#f00';
-  }
-
-  function closeModal() {
-    setIsOpen(false);
-  }
+  let subtitle: any
 
   useEffect(() => {
     relays.forEach(url => {
@@ -116,7 +113,7 @@ export default function NostrComments({relays = []}) {
   useEffect(() => {
     if (!publicKey) return
 
-    const filter = {authors: wantedMetadata.concat(publicKey)}
+    const filter: any = {authors: wantedMetadata.concat(publicKey)}
     if (metasubRef.current) {
       // update metadata subscription with new keys
       metasubRef.current.sub({filter})
@@ -124,7 +121,7 @@ export default function NostrComments({relays = []}) {
       // start listening for metadata information
       metasubRef.current = pool.sub({
         filter,
-        cb: event => {
+        cb: (event: any) => {
           if (
             !metadata[event.pubkey] ||
             metadata[event.pubkey].created_at < event.created_at
@@ -134,7 +131,7 @@ export default function NostrComments({relays = []}) {
 
             try {
               const nip05 = JSON.parse(event.content).nip05
-              queryName(nip05).then(name => {
+              queryName(nip05).then((name: any) => {
                 if (name === nip05) {
                   event.nip05verified = true
                 }
@@ -155,6 +152,20 @@ export default function NostrComments({relays = []}) {
     [events],
     []
   )
+
+  function openModal() {
+    setIsOpen(true);
+  }
+
+  function afterOpenModal() {
+    // references are now sync'd and can be accessed.
+    subtitle.style.color = '#f00';
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+  }
+
 
   return (
     <div className="comment-widget-container">
@@ -205,6 +216,7 @@ export default function NostrComments({relays = []}) {
         ))}
       </div>
   
+      { /*
       <Modal
         isOpen={modalIsOpen}
         onAfterOpen={afterOpenModal}
@@ -232,14 +244,20 @@ export default function NostrComments({relays = []}) {
             <button className='post-button' onClick={closeModal}>close</button>
 
       </Modal>
+         */ }
 
     </div>
   )
 
-  function showNotice(text) {
-    pushNotice({time: Date.now(), text})
+  function showNotice(text: any) {
+    // pushNotice({time: Date.now(), text})
+    setNotices([
+      ...notices,
+      {time: Date.now(), text}
+    ]);
     setTimeout(() => {
-      filterNotices(n => n.time - Date.now() > 5000)
+      setNotices(notices.filter(n => n.time - Date.now() > 5000));
+      // filterNotices()
     }, 5050)
   }
 
@@ -247,12 +265,12 @@ export default function NostrComments({relays = []}) {
       openModal();
   }
 
-  async function publishEvent(ev) {
+  async function publishEvent(ev: any) {
     ev.preventDefault()
 
     setEditable(false)
 
-    let event = {
+    let event: any = {
       pubkey: publicKey,
       created_at: Math.round(Date.now() / 1000),
       kind: 34,
@@ -263,7 +281,7 @@ export default function NostrComments({relays = []}) {
     // we will sign this event using the nip07 extension if it was detected
     // otherwise it should just be signed automatically when we call .publish()
     if (hasNip07) {
-      const response = await window.nostr.signEvent(event)
+      const response = await (window as any).nostr.signEvent(event)
       if (response.error) {
         throw new Error(response.error)
       }

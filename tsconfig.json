@@ -5,6 +5,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true, 
     "skipLibCheck": true,
+    "noImplicitAny": false,
 
     "jsx": "react", 
     "module": "ESNext",  
@@ -14,6 +15,7 @@
     "outDir": "dist",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "allowJs": true,
     "emitDeclarationOnly": true
   }
 }
