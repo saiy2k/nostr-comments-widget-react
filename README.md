@@ -58,11 +58,13 @@ The widget can be styled by the following CSS variables
 
 ### Default:
 ```
+:root {
   --nostr-comments-background: white
   --nostr-comments-text-color: #888
   --nostr-comments-text-color-dark: #222
   --nostr-comments-primary-color: #0d6efd
   --nostr-comments-primary-contrast: white
+}
 ```
   
 ## Roadmap

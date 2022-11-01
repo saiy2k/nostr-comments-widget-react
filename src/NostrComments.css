@@ -3,11 +3,12 @@
     box-shadow: 0px 6px 5px -3px rgba(0,0,0,0.1);
     background-color: var(--nostr-comments-background, white);
     color: var(--nostr-comments-text-color, #888);
-    padding: 18px;
+    margin: 18px;
     border-radius: 8px;
     font-family: arial;
     text-align: left;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .comment-input-section {
@@ -79,7 +80,7 @@
 
 .textarea {
     background-color: var(--nostr-comments-background, white);
-    color: var(--nostr-comments-text-color, white);
+    color: var(--nostr-comments-text-color, #888);
     border: none;
     outline: none;
     width: 100%;
