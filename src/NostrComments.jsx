@@ -55,6 +55,7 @@ export function NostrComments({relays = []}) {
     ;(async () => {
       // check if they have a nip07 nostr extension
       if (window.nostr) {
+        console.log('Plugin available');
         try {
           // and if it has a key stored on it
           const pubkey = await window.nostr.getPublicKey()
@@ -127,18 +128,18 @@ export function NostrComments({relays = []}) {
   )
 
   return (
-    <div className="comment-widget-container">
-      <div className='comment-input-section'>
-        <textarea className='textarea'
+    <div className="nostr-comments-8015-container">
+      <div className='nostr-comments-8015-input-section'>
+        <textarea className='nostr-comments-8015-textarea'
           value={comment}
           readOnly={!editable}
           onChange={e => setComment(e.target.value)}
           autoFocus
         />
-        <div className='comment-input-section-row2'>
+        <div className='nostr-comments-8015-input-section-button-row'>
 
-            <button className='info-button' onClick={infoEvent}>
-              <svg className='svg-info' version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            <button className='nostr-comments-8015-info-button' onClick={infoEvent}>
+              <svg className='nostr-comments-8015-svg-info' version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                   width="24px" height="24px" viewBox="0 0 416.979 416.979" xmlSpace="preserve">
 
                   <g>
@@ -151,21 +152,21 @@ export function NostrComments({relays = []}) {
 
               </svg>
             </button>
-            <button className='post-button' onClick={publishEvent} disabled={!editable}>
+            <button className='nostr-comments-8015-post-button' onClick={publishEvent} disabled={!editable}>
               { editable ? 'Post comment': 'Submitting' }
             </button>
         </div>
       </div>
       <div>
         {notices.map(n => (
-          <div className='notice-div' key={`${n.text}${n.time}`}>{n.text}</div>
+          <div className='nostr-comments-8015-notice-div' key={`${n.text}${n.time}`}>{n.text}</div>
         ))}
       </div>
       <div>
         {orderedEvents.map(evt => (
-          <div className='comment-card' key={evt.id}>
+          <div className='nostr-comments-8015-comment-card' key={evt.id}>
             <div style={{ fontFamily: 'monospace', fontSize: '1.2em' }}>
-                <span className='comment-title'> from <b> {evt.pubkey.slice(0, 10)}…</b> </span>
+                <span className='nostr-comments-8015-comment-title'> from <b> {evt.pubkey.slice(0, 10)}…</b> </span>
                 <span style={{ fontFamily: 'arial', fontSize: '0.7em' }}>
                     { dayjs(evt.created_at * 1000).from(new Date()) }
                 </span>

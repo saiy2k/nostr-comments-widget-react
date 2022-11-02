@@ -1,9 +1,9 @@
 
-.comment-widget-container {
+.nostr-comments-8015-container {
     box-shadow: 0px 6px 5px -3px rgba(0,0,0,0.1);
     background-color: var(--nostr-comments-background, white);
     color: var(--nostr-comments-text-color, #888);
-    margin: 18px;
+    padding: 18px;
     border-radius: 8px;
     font-family: arial;
     text-align: left;
@@ -11,7 +11,7 @@
     box-sizing: border-box;
 }
 
-.comment-input-section {
+.nostr-comments-8015-input-section {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -20,7 +20,7 @@
     border-radius: 4px;
 }
 
-.comment-input-section-row2 {
+.nostr-comments-8015-input-section-button-row {
     display: flex;
     flex-direction: row;
     gap: 4px;
@@ -28,7 +28,7 @@
     width: 100%;
 }
 
-.info-button {
+.nostr-comments-8015-info-button {
     background: var(--nostr-comments-background, white);
     color: var(--nostr-comments-primary-contrast, white);
     cursor: pointer;
@@ -37,16 +37,16 @@
     border-radius: 4px;
 }
 
-.info-button:hover {
+.nostr-comments-8015-info-button:hover {
     color: var(--nostr-comments-primary-color, #0d6efd);
     border: 1px solid var(--nostr-comments-primary-color, #0d6efd);
 }
 
-.svg-info {
+.nostr-comments-8015-svg-info {
     fill: var(--nostr-comments-primary-color, #0d6efd);
 }
 
-.post-button {
+.nostr-comments-8015-post-button {
     background: var(--nostr-comments-primary-color, #0d6efd);
     color: var(--nostr-comments-primary-contrast, white);
     cursor: pointer;
@@ -56,17 +56,17 @@
     flex: none;
 }
 
-.post-button:hover {
+.nostr-comments-8015-post-button:hover {
     color: var(--nostr-comments-primary-color, #0d6efd);
     border: 1px solid var(--nostr-comments-primary-color, #0d6efd);
     background: var(--nostr-comments-background, white);
 }
 
-.notice-div {
+.nostr-comments-8015-notice-div {
     color: var(--nostr-comments-text-color, #888);
 }
 
-.comment-card {
+.nostr-comments-8015-comment-card {
     padding: 0px;
     margin: 0px;
     padding-top: 12px;
@@ -74,11 +74,11 @@
     border-bottom: 1px solid #eee;
 }
 
-.comment-title {
+.nostr-comments-8015-comment-title {
     color: var(--nostr-comments-text-color-dark, #222);
 }
 
-.textarea {
+.nostr-comments-8015-textarea {
     background-color: var(--nostr-comments-background, white);
     color: var(--nostr-comments-text-color, #888);
     border: none;
