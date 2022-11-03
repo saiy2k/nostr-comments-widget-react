@@ -17,6 +17,7 @@ const url = normalizeURL(location.href)
 const pool = relayPool()
 
 export function NostrComments({relays = []}) {
+  const [firstEvent, setFirstEvent] = useState(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [comment, setComment] = useState('')
   const [hasNip07, setNip07] = useState(false)
@@ -25,8 +26,11 @@ export function NostrComments({relays = []}) {
   const [editable, setEditable] = useState(true)
   const [notices, setNotices] = useState([])
   const [metadata, setMetadata] = useState({})
+  // noNip07, noPubkey, noProfile, allSet
+  const [userStatus, setUserStatus] = useState('noProfile')
   const metasubRef = useRef(null)
 
+  // Relay setup; Look for 'Foundational event' with #r tag
   useEffect(() => {
     relays.forEach(url => {
       pool.addRelay(url, {read: true, write: true})
@@ -36,41 +40,71 @@ export function NostrComments({relays = []}) {
       showNotice(`${relay.url} says: ${notice}`)
     })
 
+
+
+    /*
+    TODO: Later
     let sub = pool.sub({
-      filter: {kinds: [34], '#r': [url]},
+      filter: {kinds: [1], '#r': [url]},
       cb: event => {
-        if (event.id in events) return
-        events[event.id] = event
-        setEvents({...events})
+        console.log('first ev: ', event);
+        setFirstEvent(event);
       }
     })
-    console.log('pool: ', pool);
+
+    setTimeout(() => {
+      if (events.length === 0) {
+        publishFirstEvent();
+      }
+    }, 1000);
+    */
 
     return () => {
-      sub.unsub()
+      // sub.unsub()
     }
   }, [])
 
+  // Look for Comments
+  useEffect(() => {
+
+    let sub;
+    if (firstEvent) {
+      sub = pool.sub({
+        filter: {kinds: [1], '#e': [firstEvent.id]},
+        cb: event => {
+          if (event.id in events) return
+          events[event.id] = event
+          setEvents({...events})
+          console.log('ev: ', event);
+        }
+      })
+    }
+
+    return () => {
+      if (sub) {
+        sub.unsub()
+      }
+    }
+
+  }, [firstEvent])
+
   useEffect(() => {
     ;(async () => {
+      console.log(window.nostr);
       // check if they have a nip07 nostr extension
       if (window.nostr) {
-        console.log('Plugin available');
+        console.log('window.nostr exists');
         try {
           // and if it has a key stored on it
           const pubkey = await window.nostr.getPublicKey()
+          console.log('public key: ', pubkey);
+          /*
           setNip07(true)
           setPublicKey(pubkey)
-        } catch (err) {}
-      } else {
-        // otherwise use a key from localStorage or generate a new one
-        let privateKey = localStorage.getItem('nostrkey')
-        if (!privateKey) {
-          privateKey = generatePrivateKey()
-          localStorage.setItem('nostrkey', privateKey)
+          */
+        } catch (err) {
         }
-        pool.setPrivateKey(privateKey)
-        setPublicKey(getPublicKey(privateKey))
+      } else {
       }
     })()
   }, [])
@@ -129,6 +163,60 @@ export function NostrComments({relays = []}) {
 
   return (
     <div className="nostr-comments-8015-container">
+      { userStatus === 'noNip07' ?
+      <div className='nostr-comments-8015-no-nip07'>
+        Nip07 support required. Install nos2x extention
+
+        <div className='nostr-comments-8015-input-section-button-row'>
+
+            <div> Step 1 / 3 </div>
+            <a href='https://addons.mozilla.org/en-US/firefox/addon/nos2x/' target='_blank' className='nostr-comments-8015-post-button' style={{ textDecoration: 'none' }}>
+              for Firefox
+            </a>
+
+            <a href='https://chrome.google.com/webstore/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp/related' target='_blank' className='nostr-comments-8015-post-button' style={{ textDecoration: 'none' }}>
+              for Chrome
+            </a>
+        </div>
+      </div>: null }
+
+      { userStatus === 'noPubkey' ?
+      <div className='nostr-comments-8015-input-section'>
+        <div className='nostr-comments-8015-input-section-button-row'>
+
+            <div> Step 2 / 3 </div>
+            <button className='nostr-comments-8015-post-button' onClick={getPublicKeyEvent}>
+              Get Public key
+            </button>
+
+        </div>
+      </div>: null }
+
+      { userStatus === 'noProfile' ?
+      <div className='nostr-comments-8015-input-section'>
+
+        <div className="nostr-comments-8015-form-group">
+          <label htmlFor='username'> Username </label>
+          <input type='text' id='username' />
+        </div>
+
+        <div className="nostr-comments-8015-form-group">
+          <label htmlFor='profilePic'> Profile pic URL </label>
+          <input type='text' id='profilePic' />
+        </div>
+
+        <div className='nostr-comments-8015-input-section-button-row'>
+
+            <div> Step 3 / 3 </div>
+            <button className='nostr-comments-8015-post-button' onClick={createProfileEvent}>
+              Create profile
+            </button>
+
+        </div>
+      
+      </div>: null }
+
+      { userStatus === 'allSet' ?
       <div className='nostr-comments-8015-input-section'>
         <textarea className='nostr-comments-8015-textarea'
           value={comment}
@@ -155,8 +243,12 @@ export function NostrComments({relays = []}) {
             <button className='nostr-comments-8015-post-button' onClick={publishEvent} disabled={!editable}>
               { editable ? 'Post comment': 'Submitting' }
             </button>
+
+            <button className='nostr-comments-8015-post-button' onClick={testEvent}>
+              Test
+            </button>
         </div>
-      </div>
+      </div>: null }
       <div>
         {notices.map(n => (
           <div className='nostr-comments-8015-notice-div' key={`${n.text}${n.time}`}>{n.text}</div>
@@ -209,6 +301,76 @@ export function NostrComments({relays = []}) {
 
   async function infoEvent() {
       setIsInfoOpen(true);
+  }
+
+  async function createProfileEvent(ev) {
+  }
+
+  async function getPublicKeyEvent(ev) {
+  }
+
+  async function testEvent(ev) {
+      console.log('nostr: ', window.nostr);
+      if (window.nostr && window.nostr.getPublicKey) {
+        console.log('Plugin available');
+        try {
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        console.log('nostr not available. Install chrome extension: ');
+      }
+  }
+
+  // TODO
+  async function publishFirstEvent() {
+
+    setEditable(false)
+
+    let event = {
+      pubkey: publicKey,
+      created_at: Math.round(Date.now() / 1000),
+      kind: 1,
+      tags: [['r', url]],
+      content: "comments for " + url
+    }
+
+    console.log('event: ', event);
+
+    // we will sign this event using the nip07 extension if it was detected
+    // otherwise it should just be signed automatically when we call .publish()
+    if (hasNip07) {
+      const response = await window.nostr.signEvent(event)
+      if (response.error) {
+        throw new Error(response.error)
+      }
+      event = response
+    }
+
+    const publishTimeout = setTimeout(() => {
+      showNotice(
+        `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
+      )
+      setEditable(true)
+    }, 8000)
+
+    console.log('publishing...');
+    pool.publish(event, (status, relay) => {
+      console.log('publish status: ', status, relay);
+      switch (status) {
+        case -1:
+          showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
+          setEditable(true)
+          break
+        case 1:
+          clearTimeout(publishTimeout)
+          showNotice(`event ${event.id.slice(0, 5)}… published to ${relay}.`)
+          setComment('')
+          setEditable(true)
+          break
+      }
+    })
+
   }
 
   async function publishEvent(ev) {
