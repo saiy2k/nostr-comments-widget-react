@@ -82,3 +82,7 @@ The widget can be styled by the following CSS variables
 * This software is experimental. Use at your own risk.
 
 If you want to learn more about nostr, check out [awesome-nostr](https://github.com/aljazceru/awesome-nostr).
+
+
+## Issues to report to fiatjaf
+1. On publish, if tags prop doesn't exist in event object, getting JS error 'nostx ...??'

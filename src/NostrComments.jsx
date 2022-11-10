@@ -21,6 +21,7 @@ const url = normalizeURL(location.href)
 const pool = relayPool()
 
 export function NostrComments({relays = []}) {
+  const [loaderText, setLoaderText] = useState('loading...')
   const [me, setMe] = useState(null);
   const [firstEvent, setFirstEvent] = useState(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false)
@@ -98,10 +99,9 @@ export function NostrComments({relays = []}) {
       console.log(window.nostr);
       // check if they have a nip07 nostr extension
       if (window.nostr) {
-
-        setUserStatus('noPubkey');
-
+        setUserStatus('noPubkey')
       } else {
+        setUserStatus('noNip07')
       }
     })()
   }, [])
@@ -177,7 +177,7 @@ export function NostrComments({relays = []}) {
         <div className='nostr-comments-8015-input-section-button-row'>
 
             <button className='nostr-comments-8015-post-button' disabled>
-              Fetching profile...
+              { loaderText }
             </button>
 
         </div>
@@ -241,7 +241,7 @@ export function NostrComments({relays = []}) {
         <span>
           Commenting as{' '}
           <em style={{color: 'green'}}>
-          {nameFromMetadata(metadata[publicKey] || {pubkey: publicKey})}
+          {nameFromMetadata(metadata[publicKey] || {pubkey: publicKey})} { me.about && me.about.length > 0 ? `(${me.about})`: null }
           </em>{' '}
           using relays <br/>
           {relays.map(url => (
@@ -279,6 +279,7 @@ export function NostrComments({relays = []}) {
       setNip07(true)
       setPublicKey(pubkey)
       setUserStatus('loading')
+      setLoaderText('Fetching profile...')
 
       // look for profile
       setTimeout(() => {
