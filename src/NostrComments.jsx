@@ -12,6 +12,7 @@ dayjs.extend(relativeTime)
 import './NostrComments.css'
 
 import {normalizeURL, nameFromMetadata} from './util'
+import {NostrCommentsLoader} from './NostrCommentsLoader'
 import {NostrCommentsNoNip07,
   NostrCommentsNoPubkey,
   NostrCommentsCreateProfile
@@ -172,17 +173,7 @@ export function NostrComments({relays = []}) {
           <NostrCommentsCreateProfile onSubmit={saveMetaData} />: null }
 
       { userStatus === 'loading' ?
-      <div className='nostr-comments-8015-input-section'>
-
-        <div className='nostr-comments-8015-input-section-button-row'>
-
-            <button className='nostr-comments-8015-post-button' disabled>
-              { loaderText }
-            </button>
-
-        </div>
-      
-      </div>: null }
+          <NostrCommentsLoader text={loaderText} />: null }
 
       { userStatus === 'allSet' ?
       <div className='nostr-comments-8015-input-section'>
