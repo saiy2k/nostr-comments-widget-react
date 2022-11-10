@@ -12,7 +12,10 @@ dayjs.extend(relativeTime)
 import './NostrComments.css'
 
 import {normalizeURL, nameFromMetadata} from './util'
-import {NostrCommentsCreateProfile} from './NostrCommentsAuth'
+import {NostrCommentsNoNip07,
+  NostrCommentsNoPubkey,
+  NostrCommentsCreateProfile
+} from './NostrCommentsAuth'
 
 const url = normalizeURL(location.href)
 const pool = relayPool()
@@ -28,8 +31,8 @@ export function NostrComments({relays = []}) {
   const [editable, setEditable] = useState(true)
   const [notices, setNotices] = useState([])
   const [metadata, setMetadata] = useState({})
-  // noNip07, noPubkey, loadingProfile, noProfile, allSet
-  const [userStatus, setUserStatus] = useState('noNip07')
+  // loading, noNip07, noPubkey, noProfile, allSet
+  const [userStatus, setUserStatus] = useState('loading')
   const metasubRef = useRef(null)
 
   // Relay setup; Look for 'Foundational event' with #r tag
@@ -158,38 +161,18 @@ export function NostrComments({relays = []}) {
 
   return (
     <div className="nostr-comments-8015-container">
+
       { userStatus === 'noNip07' ?
-      <div className='nostr-comments-8015-no-nip07'>
-        Nip07 support required. Install nos2x extention and configure a private key.
-
-        <div className='nostr-comments-8015-input-section-button-row'>
-
-            <div> Step 1 / 3 </div>
-            <a href='https://addons.mozilla.org/en-US/firefox/addon/nos2x/' target='_blank' className='nostr-comments-8015-post-button' style={{ textDecoration: 'none' }}>
-              for Firefox
-            </a>
-
-            <a href='https://chrome.google.com/webstore/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp/related' target='_blank' className='nostr-comments-8015-post-button' style={{ textDecoration: 'none' }}>
-              for Chrome
-            </a>
-        </div>
-      </div>: null }
+        <NostrCommentsNoNip07 /> : null }
 
       { userStatus === 'noPubkey' ?
+        <NostrCommentsNoPubkey onGetKey={getPublicKeyEvent} /> : null }
+
+      { userStatus === 'noProfile' ?
+          <NostrCommentsCreateProfile onSubmit={saveMetaData} />: null }
+
+      { userStatus === 'loading' ?
       <div className='nostr-comments-8015-input-section'>
-        <div className='nostr-comments-8015-input-section-button-row'>
-
-            <div> Step 2 / 3 </div>
-            <button className='nostr-comments-8015-post-button' onClick={getPublicKeyEvent}>
-              Get Public key
-            </button>
-
-        </div>
-      </div>: null }
-
-      { userStatus === 'loadingProfile' ?
-      <div className='nostr-comments-8015-input-section'>
-
 
         <div className='nostr-comments-8015-input-section-button-row'>
 
@@ -200,9 +183,6 @@ export function NostrComments({relays = []}) {
         </div>
       
       </div>: null }
-
-      { userStatus === 'noProfile' ?
-          <NostrCommentsCreateProfileForm onSubmit={saveMetaData} />: null }
 
       { userStatus === 'allSet' ?
       <div className='nostr-comments-8015-input-section'>
@@ -298,7 +278,7 @@ export function NostrComments({relays = []}) {
       console.log('...public key: ', pubkey)
       setNip07(true)
       setPublicKey(pubkey)
-      setUserStatus('loadingProfile')
+      setUserStatus('loading')
 
       // look for profile
       setTimeout(() => {
@@ -313,7 +293,7 @@ export function NostrComments({relays = []}) {
     try {
 
       let event = {
-        pubkey: pubkey,
+        pubkey: publicKey,
         created_at: Math.round(Date.now() / 1000),
         kind: 0,
         tags: [],
@@ -324,19 +304,34 @@ export function NostrComments({relays = []}) {
         })
       }
 
-      console.log('event: ', event, hasNip07)
+      // console.log('event to publish: ', event)
 
-      console.log(window.nostr)
       const response = await window.nostr.signEvent(event)
-      console.log('sign response: ', response);
+      // console.log('sign response: ', response);
       if (response.error) {
         throw new Error(response.error)
       }
       event = response
 
-      console.log('publishing...')
+      const saveTimeout = setTimeout(() => {
+        showNotice(
+          `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
+        )
+      }, 5000)
+
       pool.publish(event, (status, relay) => {
-        console.log(status, relay)
+        console.log('publish status: ', status, relay)
+        switch (status) {
+          case -1:
+            showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
+            break
+          case 1:
+            clearTimeout(saveTimeout)
+            setUserStatus('allSet')
+            showNotice(`event ${event.id.slice(0, 5)}… published to ${relay}.`)
+            break
+        }
+
       })
 
     } catch (err) {
@@ -412,7 +407,7 @@ export function NostrComments({relays = []}) {
         `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
       )
       setEditable(true)
-    }, 8000)
+    }, 5000)
 
     console.log('publishing...')
     pool.publish(event, (status, relay) => {

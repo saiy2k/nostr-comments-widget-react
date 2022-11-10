@@ -79,7 +79,7 @@
   align-self:  stretch;
   display: flex;
   gap: 4px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .nostr-comments-8015-form-group label {
