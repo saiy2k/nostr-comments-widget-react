@@ -22,6 +22,9 @@ const url = normalizeURL(location.href)
 const pool = relayPool()
 
 export function NostrComments({relays = []}) {
+  
+  console.log('NostrComments :: Load')
+
   const [loaderText, setLoaderText] = useState('loading...')
   const [me, setMe] = useState(null);
   const [firstEvent, setFirstEvent] = useState(null);
@@ -38,8 +41,9 @@ export function NostrComments({relays = []}) {
   const [userStatus, setUserStatus] = useState('loading')
   const metasubRef = useRef(null)
 
-  // Relay setup; Look for 'Foundational event' with #r tag
+  // 1. Relay setup; 2. Look for 'Foundational event' with #r tag
   useEffect(() => {
+    console.log('Connect to relays');
     relays.forEach(url => {
       pool.addRelay(url, {read: true, write: true})
     })
@@ -48,20 +52,9 @@ export function NostrComments({relays = []}) {
       showNotice(`${relay.url} says: ${notice}`)
     })
 
-    /*
-    const firstEventTimeout = setTimeout(() => {
-      if (!firstEvent) {
-      }
-    }, 1000);
-    */
-
     let sub = pool.sub({
       filter: {kinds: [1], '#r': [url]},
-      cb: event => {
-        clearTimeout(firstEventTimeout)
-        console.log('first ev: ', event)
-        setFirstEvent(event)
-      }
+      cb: event => setFirstEvent(event)
     })
 
     return () => {
@@ -69,7 +62,7 @@ export function NostrComments({relays = []}) {
     }
   }, [])
 
-  // Look for Comments
+  // Look for Comments, if firstEvent is present
   useEffect(() => {
 
     let sub;
@@ -80,7 +73,7 @@ export function NostrComments({relays = []}) {
           if (event.id in events) return
           events[event.id] = event
           setEvents({...events})
-          console.log('ev: ', event);
+          // console.log('ev: ', event);
         }
       })
     }
@@ -93,11 +86,11 @@ export function NostrComments({relays = []}) {
 
   }, [firstEvent])
 
+  // Check for nip07
   useEffect(() => {
     ;(async () => {
       // TODO:
       await new Promise((resolve) => setTimeout(() => resolve(), 100));
-      console.log(window.nostr);
       if (window.nostr) {
         setUserStatus('noPubkey')
       } else {
@@ -113,7 +106,6 @@ export function NostrComments({relays = []}) {
   )
 
   const [wantedMetadata] = useDebounce(wantedMetadataImmediate, 2000)
-  // const wantedMetadata = wantedMetadataImmediate;
 
   useEffect(() => {
     if (!publicKey) return
@@ -127,7 +119,7 @@ export function NostrComments({relays = []}) {
       metasubRef.current = pool.sub({
         filter,
         cb: event => {
-          // console.log('metadata event', event)
+          console.log('metadata event', event)
           if (
             !metadata[event.pubkey] ||
             metadata[event.pubkey].created_at < event.created_at
@@ -202,9 +194,11 @@ export function NostrComments({relays = []}) {
               { editable ? 'Post comment': 'Submitting' }
             </button>
 
+            { /*
             <button className='nostr-comments-8015-post-button' onClick={testEvent}>
               Test
             </button>
+            */ }
         </div>
       </div>: null }
       <div>
@@ -356,23 +350,10 @@ export function NostrComments({relays = []}) {
     }
   }
 
-  async function testEvent(ev) {
-      console.log('nostr: ', window.nostr)
-      if (window.nostr && window.nostr.getPublicKey) {
-        console.log('Plugin available')
-        try {
-        } catch (err) {
-          console.error(err)
-        }
-      } else {
-        console.log('nostr not available. Install chrome extension: ')
-      }
-  }
-
   // TODO
   async function publishFirstEvent() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       setEditable(false)
 
       let event = {
