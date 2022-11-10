@@ -63,6 +63,12 @@
   flex: none;
 }
 
+.nostr-comments-8015-post-button:disabled {
+  background: var(--nostr-comments-primary-color-contrast, white);
+  color: var(--nostr-comments-primary-color, #0d6efd);
+  cursor: disabled;
+}
+
 .nostr-comments-8015-post-button:hover {
   color: var(--nostr-comments-primary-color, #0d6efd);
   border: 1px solid var(--nostr-comments-primary-color, #0d6efd);

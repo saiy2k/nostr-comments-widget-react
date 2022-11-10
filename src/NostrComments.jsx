@@ -17,6 +17,7 @@ const url = normalizeURL(location.href)
 const pool = relayPool()
 
 export function NostrComments({relays = []}) {
+  const [me, setMe] = useState(null);
   const [firstEvent, setFirstEvent] = useState(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [comment, setComment] = useState('')
@@ -26,7 +27,7 @@ export function NostrComments({relays = []}) {
   const [editable, setEditable] = useState(true)
   const [notices, setNotices] = useState([])
   const [metadata, setMetadata] = useState({})
-  // noNip07, noPubkey, noProfile, allSet
+  // noNip07, noPubkey, loadingProfile, noProfile, allSet
   const [userStatus, setUserStatus] = useState('noNip07')
   const metasubRef = useRef(null)
 
@@ -122,7 +123,7 @@ export function NostrComments({relays = []}) {
       metasubRef.current = pool.sub({
         filter,
         cb: event => {
-          console.log('metadata event', event)
+          // console.log('metadata event', event)
           if (
             !metadata[event.pubkey] ||
             metadata[event.pubkey].created_at < event.created_at
@@ -185,29 +186,22 @@ export function NostrComments({relays = []}) {
         </div>
       </div>: null }
 
-      { userStatus === 'noProfile' ?
+      { userStatus === 'loadingProfile' ?
       <div className='nostr-comments-8015-input-section'>
 
-        <div className="nostr-comments-8015-form-group">
-          <label htmlFor='username'> Username </label>
-          <input type='text' id='username' />
-        </div>
-
-        <div className="nostr-comments-8015-form-group">
-          <label htmlFor='profilePic'> Profile pic URL </label>
-          <input type='text' id='profilePic' />
-        </div>
 
         <div className='nostr-comments-8015-input-section-button-row'>
 
-            <div> Step 3 / 3 </div>
-            <button className='nostr-comments-8015-post-button' onClick={createProfileEvent}>
-              Create profile
+            <button className='nostr-comments-8015-post-button' disabled>
+              Fetching profile...
             </button>
 
         </div>
       
       </div>: null }
+
+      { userStatus === 'noProfile' ?
+          <NostrCommentsCreateProfileForm />: null }
 
       { userStatus === 'allSet' ?
       <div className='nostr-comments-8015-input-section'>
@@ -306,58 +300,73 @@ export function NostrComments({relays = []}) {
       console.log('...public key: ', pubkey)
       setNip07(true)
       setPublicKey(pubkey)
-      setUserStatus('noProfile')
+      setUserStatus('loadingProfile')
 
       // look for profile
       setTimeout(() => {
         getMetaData(pubkey)
+        // saveMetaData(pubkey)
       }, 1000)
     } catch (err) {
     }
   }
 
-  async function getMetaData(pubkey) {
+  async function saveMetaData(pubkey) {
+
     try {
 
-    let event = {
-      pubkey: pubkey,
-      created_at: Math.round(Date.now() / 1000),
-      kind: 0,
-      content: JSON.stringify({
-        name: 'saiy2k',
-        about: 'Stardust',
-        picture: 'https://pbs.twimg.com/profile_images/1402147480863526912/Ykyw5cJ-_400x400.jpg'
-      })
-    }
+      let event = {
+        pubkey: pubkey,
+        created_at: Math.round(Date.now() / 1000),
+        kind: 0,
+        tags: [],
+        content: JSON.stringify({
+          name: 'saiy2k',
+          about: 'Stardust',
+          picture: 'https://pbs.twimg.com/profile_images/1402147480863526912/Ykyw5cJ-_400x400.jpg'
+        })
+      }
 
-    console.log('event: ', event, hasNip07)
+      console.log('event: ', event, hasNip07)
 
-    // if (hasNip07) {
+      console.log(window.nostr)
       const response = await window.nostr.signEvent(event)
       console.log('sign response: ', response);
       if (response.error) {
         throw new Error(response.error)
       }
       event = response
-    // }
 
-    console.log('publishing...')
-    pool.publish(event, (status, relay) => {
-      console.log(status, relay)
-    })
- 
-      /*
+      console.log('publishing...')
+      pool.publish(event, (status, relay) => {
+        console.log(status, relay)
+      })
+
+    } catch (err) {
+      console.log('setmeta error: ', err)
+    }
+  }
+
+  async function getMetaData(pubkey) {
+    try {
+
       let sub = pool.sub({
         filter: {kinds: [0], 'authors': [pubkey]},
         cb: event => {
-          console.log('author meta: ', event)
+          if (!me) {
+            clearTimeout(getMetaTimeout)
+            console.log('author meta: ', event)
+            setMe(JSON.parse(event.content));
+            setUserStatus('allSet')
+          }
         }
       })
-      */
 
-      setTimeout(() => {
+      const getMetaTimeout = setTimeout(() => {
+        setUserStatus('noProfile')
         console.log('No author')
       }, 1000)
+
     } catch (err) {
       console.log('setmeta error: ', err)
     }
@@ -478,3 +487,28 @@ export function NostrComments({relays = []}) {
   }
 }
 
+function NostrCommentsCreateProfileForm() {
+
+  return (
+    <div className='nostr-comments-8015-input-section'>
+        <div className="nostr-comments-8015-form-group">
+          <label htmlFor='username'> Username </label>
+          <input type='text' id='username' />
+        </div>
+
+        <div className="nostr-comments-8015-form-group">
+          <label htmlFor='profilePic'> Profile pic URL </label>
+          <input type='text' id='profilePic' />
+        </div>
+
+        <div className='nostr-comments-8015-input-section-button-row'>
+
+            <div> Step 3 / 3 </div>
+            <button className='nostr-comments-8015-post-button' onClick={createProfileEvent}>
+              Create profile
+            </button>
+
+        </div>
+    </div>
+  )
+}
