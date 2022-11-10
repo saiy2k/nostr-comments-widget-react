@@ -27,7 +27,7 @@ export function NostrComments({relays = []}) {
   const [notices, setNotices] = useState([])
   const [metadata, setMetadata] = useState({})
   // noNip07, noPubkey, noProfile, allSet
-  const [userStatus, setUserStatus] = useState('noProfile')
+  const [userStatus, setUserStatus] = useState('noNip07')
   const metasubRef = useRef(null)
 
   // Relay setup; Look for 'Foundational event' with #r tag
@@ -39,8 +39,6 @@ export function NostrComments({relays = []}) {
     pool.onNotice((notice, relay) => {
       showNotice(`${relay.url} says: ${notice}`)
     })
-
-
 
     /*
     TODO: Later
@@ -90,20 +88,14 @@ export function NostrComments({relays = []}) {
 
   useEffect(() => {
     ;(async () => {
+      await new Promise((resolve) => setTimeout(() => resolve(), 100));
+      
       console.log(window.nostr);
       // check if they have a nip07 nostr extension
       if (window.nostr) {
-        console.log('window.nostr exists');
-        try {
-          // and if it has a key stored on it
-          const pubkey = await window.nostr.getPublicKey()
-          console.log('public key: ', pubkey);
-          /*
-          setNip07(true)
-          setPublicKey(pubkey)
-          */
-        } catch (err) {
-        }
+
+        setUserStatus('noPubkey');
+
       } else {
       }
     })()
@@ -130,6 +122,7 @@ export function NostrComments({relays = []}) {
       metasubRef.current = pool.sub({
         filter,
         cb: event => {
+          console.log('metadata event', event)
           if (
             !metadata[event.pubkey] ||
             metadata[event.pubkey].created_at < event.created_at
@@ -165,7 +158,7 @@ export function NostrComments({relays = []}) {
     <div className="nostr-comments-8015-container">
       { userStatus === 'noNip07' ?
       <div className='nostr-comments-8015-no-nip07'>
-        Nip07 support required. Install nos2x extention
+        Nip07 support required. Install nos2x extention and configure a private key.
 
         <div className='nostr-comments-8015-input-section-button-row'>
 
@@ -293,32 +286,93 @@ export function NostrComments({relays = []}) {
     setNotices([
       ...notices,
       {time: Date.now(), text}
-    ]);
+    ])
     setTimeout(() => {
-      setNotices(notices.filter(n => n.time - Date.now() > 5000));
+      setNotices(notices.filter(n => n.time - Date.now() > 5000))
     }, 5050)
   }
 
   async function infoEvent() {
-      setIsInfoOpen(true);
+      setIsInfoOpen(true)
   }
 
   async function createProfileEvent(ev) {
   }
 
   async function getPublicKeyEvent(ev) {
+    try {
+      // and if it has a key stored on it
+      const pubkey = await window.nostr.getPublicKey()
+      console.log('...public key: ', pubkey)
+      setNip07(true)
+      setPublicKey(pubkey)
+      setUserStatus('noProfile')
+
+      // look for profile
+      setTimeout(() => {
+        getMetaData(pubkey)
+      }, 1000)
+    } catch (err) {
+    }
+  }
+
+  async function getMetaData(pubkey) {
+    try {
+
+    let event = {
+      pubkey: pubkey,
+      created_at: Math.round(Date.now() / 1000),
+      kind: 0,
+      content: JSON.stringify({
+        name: 'saiy2k',
+        about: 'Stardust',
+        picture: 'https://pbs.twimg.com/profile_images/1402147480863526912/Ykyw5cJ-_400x400.jpg'
+      })
+    }
+
+    console.log('event: ', event, hasNip07)
+
+    // if (hasNip07) {
+      const response = await window.nostr.signEvent(event)
+      console.log('sign response: ', response);
+      if (response.error) {
+        throw new Error(response.error)
+      }
+      event = response
+    // }
+
+    console.log('publishing...')
+    pool.publish(event, (status, relay) => {
+      console.log(status, relay)
+    })
+ 
+      /*
+      let sub = pool.sub({
+        filter: {kinds: [0], 'authors': [pubkey]},
+        cb: event => {
+          console.log('author meta: ', event)
+        }
+      })
+      */
+
+      setTimeout(() => {
+        console.log('No author')
+      }, 1000)
+    } catch (err) {
+      console.log('setmeta error: ', err)
+    }
   }
 
   async function testEvent(ev) {
-      console.log('nostr: ', window.nostr);
+      console.log('nostr: ', window.nostr)
       if (window.nostr && window.nostr.getPublicKey) {
-        console.log('Plugin available');
+        console.log('Plugin available')
         try {
         } catch (err) {
-          console.error(err);
+          console.error(err)
         }
       } else {
-        console.log('nostr not available. Install chrome extension: ');
+        console.log('nostr not available. Install chrome extension: ')
       }
   }
 
@@ -335,7 +389,7 @@ export function NostrComments({relays = []}) {
       content: "comments for " + url
     }
 
-    console.log('event: ', event);
+    console.log('event: ', event)
 
     // we will sign this event using the nip07 extension if it was detected
     // otherwise it should just be signed automatically when we call .publish()
@@ -354,9 +408,9 @@ export function NostrComments({relays = []}) {
       setEditable(true)
     }, 8000)
 
-    console.log('publishing...');
+    console.log('publishing...')
     pool.publish(event, (status, relay) => {
-      console.log('publish status: ', status, relay);
+      console.log('publish status: ', status, relay)
       switch (status) {
         case -1:
           showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
