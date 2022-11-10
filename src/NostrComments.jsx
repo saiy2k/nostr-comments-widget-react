@@ -201,7 +201,7 @@ export function NostrComments({relays = []}) {
       </div>: null }
 
       { userStatus === 'noProfile' ?
-          <NostrCommentsCreateProfileForm />: null }
+          <NostrCommentsCreateProfileForm onSubmit={saveMetaData} />: null }
 
       { userStatus === 'allSet' ?
       <div className='nostr-comments-8015-input-section'>
@@ -290,9 +290,6 @@ export function NostrComments({relays = []}) {
       setIsInfoOpen(true)
   }
 
-  async function createProfileEvent(ev) {
-  }
-
   async function getPublicKeyEvent(ev) {
     try {
       // and if it has a key stored on it
@@ -305,13 +302,12 @@ export function NostrComments({relays = []}) {
       // look for profile
       setTimeout(() => {
         getMetaData(pubkey)
-        // saveMetaData(pubkey)
       }, 1000)
     } catch (err) {
     }
   }
 
-  async function saveMetaData(pubkey) {
+  async function saveMetaData({userName, about, profilePicUrl}) {
 
     try {
 
@@ -321,9 +317,9 @@ export function NostrComments({relays = []}) {
         kind: 0,
         tags: [],
         content: JSON.stringify({
-          name: 'saiy2k',
-          about: 'Stardust',
-          picture: 'https://pbs.twimg.com/profile_images/1402147480863526912/Ykyw5cJ-_400x400.jpg'
+          name: userName,
+          about: about,
+          picture: profilePicUrl
         })
       }
 
@@ -487,18 +483,32 @@ export function NostrComments({relays = []}) {
   }
 }
 
-function NostrCommentsCreateProfileForm() {
+function NostrCommentsCreateProfileForm({ onSubmit }) {
+
+  const [userName, setUserName] = useState('')
+  const [profilePicUrl, setProfilePicUrl] = useState('')
+  const [about, setAbout] = useState('')
+
+  async function createProfileEvent(ev) {
+    console.log(userName, profilePicUrl)
+    onSubmit({ userName, about, profilePicUrl });
+  }
 
   return (
     <div className='nostr-comments-8015-input-section'>
         <div className="nostr-comments-8015-form-group">
           <label htmlFor='username'> Username </label>
-          <input type='text' id='username' />
+          <input type='text' id='username' value={userName} onChange={e => setUserName(e.target.value) } />
         </div>
 
         <div className="nostr-comments-8015-form-group">
           <label htmlFor='profilePic'> Profile pic URL </label>
-          <input type='text' id='profilePic' />
+          <input type='text' id='profilePic' value={profilePicUrl} onChange={e => setProfilePicUrl(e.target.value) } />
+        </div>
+
+        <div className="nostr-comments-8015-form-group">
+          <label htmlFor='about'> About you </label>
+          <input type='text' id='about' value={about} onChange={e => setAbout(e.target.value) } />
         </div>
 
         <div className='nostr-comments-8015-input-section-button-row'>
