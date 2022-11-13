@@ -11,7 +11,7 @@ dayjs.extend(relativeTime)
 
 import './NostrComments.css'
 
-import {normalizeURL, nameFromMetadata} from './util'
+import {normalizeURL, nameFromMetadata, pictureFromMetadata} from './util'
 import {NostrCommentsLoader} from './NostrCommentsLoader'
 import {NostrCommentsNoNip07,
   NostrCommentsNoPubkey,
@@ -26,7 +26,6 @@ export function NostrComments({relays = []}) {
   console.log('NostrComments :: Load')
 
   const [loaderText, setLoaderText] = useState('loading...')
-  const [me, setMe] = useState(null);
   const [firstEvent, setFirstEvent] = useState(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [comment, setComment] = useState('')
@@ -125,6 +124,7 @@ export function NostrComments({relays = []}) {
             !metadata[event.pubkey] ||
             metadata[event.pubkey].created_at < event.created_at
           ) {
+            event.profile = JSON.parse(event.content)
             metadata[event.pubkey] = event
             setMetadata({...metadata})
 
@@ -212,16 +212,18 @@ export function NostrComments({relays = []}) {
       <div>
         {orderedEvents.map(evt => (
           <div className='nostr-comments-8015-comment-card' key={evt.id}>
-            <div style={{ fontFamily: 'monospace', fontSize: '1.2em' }}>
-                {/*
-                <span className='nostr-comments-8015-comment-title'> from <b> {evt.pubkey.slice(0, 10)}…</b> </span>
-                */ }
-                <span className='nostr-comments-8015-comment-title'> from <b> {nameFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} </b> </span>
-                <span style={{ fontFamily: 'arial', fontSize: '0.7em' }}>
-                    { dayjs(evt.created_at * 1000).from(new Date()) }
-                </span>
+            <div>
+              <img src={pictureFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} className="nostr-comments-8015-avatar-image" />
             </div>
-            <div style={{ marginTop: '8px' }}>{evt.content}</div>
+            <div>
+              <div style={{ fontFamily: 'monospace', paddingTop: '6px' }}>
+                  <span className='nostr-comments-8015-comment-title'> <b> {nameFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} </b> </span>
+                  <span style={{ fontFamily: 'arial', fontSize: '0.7em' }}>
+                      { dayjs(evt.created_at * 1000).from(new Date()) }
+                  </span>
+              </div>
+              <div style={{ marginTop: '4px', fontSize: '0.9em' }}>{evt.content}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -231,7 +233,7 @@ export function NostrComments({relays = []}) {
         <span>
           Commenting as{' '}
           <em style={{color: 'green'}}>
-          {nameFromMetadata(metadata[publicKey] || {pubkey: publicKey})} { me.about && me.about.length > 0 ? `(${me.about})`: null }
+          {nameFromMetadata(metadata[publicKey] || {pubkey: publicKey})} { metadata[publicKey].profile.about && metadata[publicKey].profile.about.length > 0 ? `(${metadata[publicKey].profile.about})`: null }
           </em>{' '}
           using relays <br/>
           {relays.map(url => (
@@ -268,8 +270,8 @@ export function NostrComments({relays = []}) {
       console.log('...public key: ', pubkey)
       // setNip07(true)
       setPublicKey(pubkey)
-      setUserStatus('loading')
-      setLoaderText('Fetching profile...')
+      setUserStatus('allSet')
+      // setLoaderText('Fetching profile...')
 
       // look for profile
       // setTimeout(() => {
@@ -468,3 +470,5 @@ export function NostrComments({relays = []}) {
   }
 }
 
+function NostrCommentsItem(comment) {
+}
