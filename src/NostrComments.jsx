@@ -30,7 +30,6 @@ export function NostrComments({relays = []}) {
   const [firstEvent, setFirstEvent] = useState(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [comment, setComment] = useState('')
-  // const [hasNip07, setNip07] = useState(false)
   const [publicKey, setPublicKey] = useState(null)
   const [events, setEvents] = useState({})
   const [editable, setEditable] = useState(true)
@@ -90,6 +89,7 @@ export function NostrComments({relays = []}) {
   useEffect(() => {
     ;(async () => {
       // TODO:
+      console.log('window.nostr: ', window.nostr)
       await new Promise((resolve) => setTimeout(() => resolve(), 100));
       if (window.nostr) {
         setUserStatus('noPubkey')
@@ -110,7 +110,8 @@ export function NostrComments({relays = []}) {
   useEffect(() => {
     if (!publicKey) return
 
-    const filter = {authors: wantedMetadata.concat(publicKey)}
+    const filter = {kinds: [0], authors: wantedMetadata.concat(publicKey)}
+    console.log('author filter', filter)
     if (metasubRef.current) {
       // update metadata subscription with new keys
       metasubRef.current.sub({filter})
@@ -126,6 +127,8 @@ export function NostrComments({relays = []}) {
           ) {
             metadata[event.pubkey] = event
             setMetadata({...metadata})
+
+            console.log(metadata)
 
             try {
               const nip05 = JSON.parse(event.content).nip05
@@ -210,7 +213,10 @@ export function NostrComments({relays = []}) {
         {orderedEvents.map(evt => (
           <div className='nostr-comments-8015-comment-card' key={evt.id}>
             <div style={{ fontFamily: 'monospace', fontSize: '1.2em' }}>
+                {/*
                 <span className='nostr-comments-8015-comment-title'> from <b> {evt.pubkey.slice(0, 10)}…</b> </span>
+                */ }
+                <span className='nostr-comments-8015-comment-title'> from <b> {nameFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} </b> </span>
                 <span style={{ fontFamily: 'arial', fontSize: '0.7em' }}>
                     { dayjs(evt.created_at * 1000).from(new Date()) }
                 </span>
@@ -252,7 +258,7 @@ export function NostrComments({relays = []}) {
   }
 
   async function infoEvent() {
-      setIsInfoOpen(true)
+    setIsInfoOpen(true)
   }
 
   async function getPublicKeyEvent(ev) {
@@ -266,11 +272,13 @@ export function NostrComments({relays = []}) {
       setLoaderText('Fetching profile...')
 
       // look for profile
-      setTimeout(() => {
-        getMetaData(pubkey)
-      }, 1000)
+      // setTimeout(() => {
+      // getMetaData(pubkey)
+      // }, 1000)
     } catch (err) {
-      setPublicKey('');
+      alert('ERROR fetching public key: Pls check if your private key is configured. ' + JSON.stringify(err, Object.getOwnPropertyNames(err)))
+      console.error('ERROR fetching public key: Pls check if your private key is configured', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+      setPublicKey('')
     }
   }
 
