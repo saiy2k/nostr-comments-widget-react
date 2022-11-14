@@ -1,5 +1,49 @@
 import React, {useState} from 'react'
 
+export function NostrAuthReducer(state, action) {
+  console.log('NostrAuthReducer: ', action.type)
+
+  switch (action.type) {
+
+    case 'loading':
+      return 'loading'
+
+    case 'noNip07':
+      return 'loading'
+
+    case 'noPubkey':
+      return 'noPubkey'
+
+    case 'public_key_received':
+      const pubkey = action.pubkey
+      if (action.metadata[pubkey] && action.metadata[pubkey].profile) {
+        const profile = action.metadata[pubkey].profile;
+        if (profile.name && profile.about && profile.picture) {
+          return 'allSet'
+        } else {
+          return 'noProfile'
+        }
+      } else {
+        return 'noProfile'
+      }
+
+    case 'self_meta_received':
+      const evt = action.event
+      if (evt.profile.name && evt.profile.about && evt.profile.picture) {
+        return 'allSet'
+      } else {
+        return 'noProfile'
+      }
+
+    case 'meta_saved':
+      return 'allSet'
+
+    default:
+      throw new Error();
+  }
+
+}
+
 export function NostrCommentsNoNip07() {
 
   return <div className='nostr-comments-8015-no-nip07'>

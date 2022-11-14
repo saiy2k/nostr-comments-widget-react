@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react'
+import React, {useState, useEffect, useRef, useReducer} from 'react'
 import useComputedState from 'use-computed-state'
 import {useDebounce} from 'use-debounce'
 import uniq from 'uniq'
@@ -11,7 +11,8 @@ import {normalizeURL, nameFromMetadata} from './util'
 import {NostrCommentsLoader} from './NostrCommentsLoader'
 import {NostrCommentsNoNip07,
   NostrCommentsNoPubkey,
-  NostrCommentsCreateProfile
+  NostrCommentsCreateProfile,
+  NostrAuthReducer
 } from './NostrCommentsAuth'
 import {NostrCommentsItem} from './NostrCommentsItem'
 
@@ -33,7 +34,7 @@ export function NostrComments({relays = []}) {
   const [metadata, setMetadata] = useState({})
 
   // loading, noNip07, noPubkey, noProfile, allSet
-  const [userStatus, setUserStatus] = useState('loading')
+  const [userStatus, dispatchUserStatus] = useReducer(NostrAuthReducer, 'loading')
   const metasubRef = useRef(null)
 
   // 1. Relay setup; 2. Look for 'Foundational event' with #r tag
@@ -68,7 +69,6 @@ export function NostrComments({relays = []}) {
           if (event.id in events) return
           events[event.id] = event
           setEvents({...events})
-          // console.log('ev: ', event);
         }
       })
     }
@@ -83,13 +83,13 @@ export function NostrComments({relays = []}) {
 
   useEffect(() => {
     ;(async () => {
-      // TODO: Promise usage
+      // TODO: Promise usage for time delay. Rethink
       console.log('window.nostr: ', window.nostr)
       await new Promise((resolve) => setTimeout(() => resolve(), 100));
       if (window.nostr) {
-        setUserStatus('noPubkey')
+        dispatchUserStatus({type: 'noPubkey'})
       } else {
-        setUserStatus('noNip07')
+        dispatchUserStatus({type: 'noNip07'})
       }
     })()
   }, [])
@@ -128,16 +128,9 @@ export function NostrComments({relays = []}) {
             metadata[event.pubkey] = event
             setMetadata({...metadata})
 
-            debugger
-            if (publicKey && event.pubkey === publicKey) {
-              if (event.profile.name && event.profile.about && event.profile.picture) {
-                setUserStatus('allSet')
-              } else {
-                setUserStatus('noProfile')
-              }
+            if (userStatus === 'loading_profile' && publicKey && event.pubkey === publicKey) {
+              dispatchUserStatus({type: 'self_meta_received', event: event})
             }
-
-            console.log(metadata)
 
             try {
               const nip05 = JSON.parse(event.content).nip05
@@ -175,7 +168,7 @@ export function NostrComments({relays = []}) {
       { userStatus === 'noProfile' ?
           <NostrCommentsCreateProfile onSubmit={saveMetaData} />: null }
 
-      { userStatus === 'loading' ?
+      { userStatus === 'loading' || userStatus === 'loading_profile' ?
           <NostrCommentsLoader text={loaderText} />: null }
 
       { userStatus === 'allSet' ?
@@ -264,18 +257,13 @@ export function NostrComments({relays = []}) {
       const pubkey = await window.nostr.getPublicKey()
       console.log('...public key: ', pubkey)
       setPublicKey(pubkey)
-      if (metadata[pubkey] && metadata[pubkey].profile) {
-        const profile = metadata[pubkey].profile;
-        if (profile.name && profile.about && profile.picture) {
-          setUserStatus('allSet')
-        } else {
-          setUserStatus('noProfile')
-        }
-      } else {
-        setUserStatus('loading')
-      }
 
-      // setTimeout to noProfile
+      // TODO: give sometime for metadata to load. What if metadata fetch takes 1+ second
+      dispatchUserStatus({type: 'loading'})
+      setTimeout(() => {
+        dispatchUserStatus({type: 'public_key_received', metadata: metadata, pubkey: pubkey})
+      }, 1000)
+
     } catch (err) {
       alert('ERROR fetching public key: Pls check if your private key is configured. ' + JSON.stringify(err, Object.getOwnPropertyNames(err)))
       console.error('ERROR fetching public key: Pls check if your private key is configured', JSON.stringify(err, Object.getOwnPropertyNames(err)))
@@ -300,7 +288,8 @@ export function NostrComments({relays = []}) {
       }
 
       await publishEvent(event)
-      setUserStatus('allSet')
+      dispatchUserStatus({type: 'meta_saved'})
+
     } catch (err) {
       console.error('ERROR Set meta: ', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     }
@@ -362,15 +351,11 @@ export function NostrComments({relays = []}) {
       setEditable(false)
 
       // console.log('event: ', ev);
-      // we will sign this event using the nip07 extension if it was detected
-      // otherwise it should just be signed automatically when we call .publish()
-      // if (hasNip07) {
       const response = await window.nostr.signEvent(ev)
       if (response.error) {
         throw new Error(response.error)
       }
       ev = response
-      // }
 
       const publishTimeout = setTimeout(() => {
         showNotice(
