@@ -4,7 +4,7 @@ export function NostrCommentsNoNip07() {
 
   return <div className='nostr-comments-8015-no-nip07'>
     <p>
-      <b>Nip07 support required.</b> <br/> 1. Install nos2x extention. <br/> 2. Configure a private key. <br/> 3. Refresh this page.
+      <b>Nip07 support required to comment.</b> <br/> 1. Install nos2x extention. <br/> 2. Configure a private key. <br/> 3. Refresh this page.
     </p>
 
     <div className='nostr-comments-8015-input-section-button-row'>

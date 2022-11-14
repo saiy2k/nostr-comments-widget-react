@@ -5,18 +5,15 @@ import uniq from 'uniq'
 import {generatePrivateKey, getPublicKey, relayPool} from 'nostr-tools'
 import {queryName} from 'nostr-tools/nip05'
 import Modal from './Modal'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-dayjs.extend(relativeTime)
-
 import './NostrComments.css'
 
-import {normalizeURL, nameFromMetadata, pictureFromMetadata} from './util'
+import {normalizeURL, nameFromMetadata} from './util'
 import {NostrCommentsLoader} from './NostrCommentsLoader'
 import {NostrCommentsNoNip07,
   NostrCommentsNoPubkey,
   NostrCommentsCreateProfile
 } from './NostrCommentsAuth'
+import {NostrCommentsItem} from './NostrCommentsItem'
 
 const url = normalizeURL(location.href)
 const pool = relayPool()
@@ -84,10 +81,9 @@ export function NostrComments({relays = []}) {
 
   }, [firstEvent])
 
-  // Check for nip07
   useEffect(() => {
     ;(async () => {
-      // TODO:
+      // TODO: Promise usage
       console.log('window.nostr: ', window.nostr)
       await new Promise((resolve) => setTimeout(() => resolve(), 100));
       if (window.nostr) {
@@ -197,7 +193,7 @@ export function NostrComments({relays = []}) {
 
               </svg>
             </button>
-            <button className='nostr-comments-8015-post-button' onClick={publishEvent} disabled={!editable}>
+            <button className='nostr-comments-8015-post-button' onClick={publishComment} disabled={!editable}>
               { editable ? 'Post comment': 'Submitting' }
             </button>
 
@@ -215,20 +211,7 @@ export function NostrComments({relays = []}) {
       </div>
       <div>
         {orderedEvents.map(evt => (
-          <div className='nostr-comments-8015-comment-card' key={evt.id}>
-            <div>
-              <img src={pictureFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} className="nostr-comments-8015-avatar-image" />
-            </div>
-            <div>
-              <div style={{ fontFamily: 'monospace', paddingTop: '6px' }}>
-                  <span className='nostr-comments-8015-comment-title'> <b> {nameFromMetadata(metadata[evt.pubkey] || {pubkey: evt.pubkey})} </b> </span>
-                  <span style={{ fontFamily: 'arial', fontSize: '0.7em' }}>
-                      { dayjs(evt.created_at * 1000).from(new Date()) }
-                  </span>
-              </div>
-              <div style={{ marginTop: '4px', fontSize: '0.9em' }}>{evt.content}</div>
-            </div>
-          </div>
+          <NostrCommentsItem key={evt.id} evt={evt} metadata={metadata} />
         ))}
       </div>
 
@@ -269,18 +252,10 @@ export function NostrComments({relays = []}) {
 
   async function getPublicKeyEvent(ev) {
     try {
-      // and if it has a key stored on it
       const pubkey = await window.nostr.getPublicKey()
       console.log('...public key: ', pubkey)
-      // setNip07(true)
       setPublicKey(pubkey)
       setUserStatus('allSet')
-      // setLoaderText('Fetching profile...')
-
-      // look for profile
-      // setTimeout(() => {
-      // getMetaData(pubkey)
-      // }, 1000)
     } catch (err) {
       alert('ERROR fetching public key: Pls check if your private key is configured. ' + JSON.stringify(err, Object.getOwnPropertyNames(err)))
       console.error('ERROR fetching public key: Pls check if your private key is configured', JSON.stringify(err, Object.getOwnPropertyNames(err)))
@@ -304,175 +279,106 @@ export function NostrComments({relays = []}) {
         })
       }
 
-      // console.log('event to publish: ', event)
-
-      const response = await window.nostr.signEvent(event)
-      // console.log('sign response: ', response);
-      if (response.error) {
-        throw new Error(response.error)
-      }
-      event = response
-
-      const saveTimeout = setTimeout(() => {
-        showNotice(
-          `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
-        )
-      }, 5000)
-
-      pool.publish(event, (status, relay) => {
-        console.log('publish status: ', status, relay)
-        switch (status) {
-          case -1:
-            showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
-            break
-          case 1:
-            clearTimeout(saveTimeout)
-            setUserStatus('allSet')
-            showNotice(`event ${event.id.slice(0, 5)}… published to ${relay}.`)
-            break
-        }
-
-      })
-
+      await publishEvent(event)
+      setUserStatus('allSet')
     } catch (err) {
-      console.log('setmeta error: ', err)
-    }
-  }
-
-  async function getMetaData(pubkey) {
-    try {
-
-      let sub = pool.sub({
-        filter: {kinds: [0], 'authors': [pubkey]},
-        cb: event => {
-          if (!me) {
-            clearTimeout(getMetaTimeout)
-            console.log('author meta: ', event)
-            setMe(JSON.parse(event.content));
-            setUserStatus('allSet')
-          }
-        }
-      })
-
-      const getMetaTimeout = setTimeout(() => {
-        setUserStatus('noProfile')
-        console.log('No author')
-      }, 1000)
-
-    } catch (err) {
-      console.log('setmeta error: ', err)
+      console.error('ERROR Set meta: ', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     }
   }
 
   // TODO
-  async function publishFirstEvent() {
+  async function publishFirstComment() {
 
     return new Promise(async (resolve, reject) => {
+      try {
+        setEditable(false)
+
+        let event = {
+          pubkey: publicKey,
+          created_at: Math.round(Date.now() / 1000),
+          kind: 1,
+          tags: [['r', url]],
+          content: "comments for " + url
+        }
+
+        await publishEvent(event)
+        resolve(event)
+      } catch (err) {
+        console.error('ERROR Publishing First event: ', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+      }
+    })
+
+  }
+
+  async function publishComment(ev) {
+    try {
+      ev.preventDefault()
       setEditable(false)
+
+      let fevent = firstEvent;
+      if (!firstEvent) {
+        fevent = await publishFirstComment()
+      }
 
       let event = {
         pubkey: publicKey,
         created_at: Math.round(Date.now() / 1000),
         kind: 1,
-        tags: [['r', url]],
-        content: "comments for " + url
+        tags: [['e', fevent.id]],
+        content: comment
       }
 
-      console.log('event: ', event)
+      await publishEvent(event)
+      setComment('')
+    } catch (err) {
+      console.error('ERROR Publishing event: ', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+    }
 
+ }
+
+  async function publishEvent(ev) {
+
+    return new Promise(async (resolve, reject) => {
+      setEditable(false)
+
+      // console.log('event: ', ev);
       // we will sign this event using the nip07 extension if it was detected
       // otherwise it should just be signed automatically when we call .publish()
       // if (hasNip07) {
-      const response = await window.nostr.signEvent(event)
+      const response = await window.nostr.signEvent(ev)
       if (response.error) {
         throw new Error(response.error)
       }
-      event = response
+      ev = response
       // }
 
       const publishTimeout = setTimeout(() => {
         showNotice(
-          `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
+          `failed to publish event ${ev.id.slice(0, 5)}… to any relay.`
         )
         setEditable(true)
       }, 5000)
 
-      console.log('publishing...')
-      pool.publish(event, (status, relay) => {
-        console.log('publish status: ', status, relay)
+      console.log('publishing...', ev);
+      pool.publish(ev, (status, relay) => {
+        console.log('publish status: ', status, relay);
         switch (status) {
           case -1:
-            showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
+            showNotice(`failed to send ${JSON.stringify(ev)} to ${relay}`)
             setEditable(true)
             reject()
             break
           case 1:
             clearTimeout(publishTimeout)
-            showNotice(`event ${event.id.slice(0, 5)}… published to ${relay}.`)
-            setComment('')
+            showNotice(`event ${ev.id.slice(0, 5)}… published to ${relay}.`)
             setEditable(true)
-            resolve(event)
+            resolve()
             break
         }
       })
     })
 
   }
-
-  async function publishEvent(ev) {
-    ev.preventDefault()
-    setEditable(false)
-
-    let fevent = firstEvent;
-    if (!firstEvent) {
-      fevent = await publishFirstEvent()
-    }
-
-    let event = {
-      pubkey: publicKey,
-      created_at: Math.round(Date.now() / 1000),
-      kind: 1,
-      tags: [['e', fevent.id]],
-      content: comment
-    }
-
-    console.log('event: ', event);
-
-    // we will sign this event using the nip07 extension if it was detected
-    // otherwise it should just be signed automatically when we call .publish()
-    // if (hasNip07) {
-      const response = await window.nostr.signEvent(event)
-      if (response.error) {
-        throw new Error(response.error)
-      }
-      event = response
-    // }
-
-    const publishTimeout = setTimeout(() => {
-      showNotice(
-        `failed to publish event ${event.id.slice(0, 5)}… to any relay.`
-      )
-      setEditable(true)
-    }, 8000)
-
-    console.log('publishing...');
-    pool.publish(event, (status, relay) => {
-      console.log('publish status: ', status, relay);
-      switch (status) {
-        case -1:
-          showNotice(`failed to send ${JSON.stringify(event)} to ${relay}`)
-          setEditable(true)
-          break
-        case 1:
-          clearTimeout(publishTimeout)
-          showNotice(`event ${event.id.slice(0, 5)}… published to ${relay}.`)
-          setComment('')
-          setEditable(true)
-          break
-      }
-    })
-  }
 }
 
-function NostrCommentsItem(comment) {
-}
+

@@ -72,6 +72,7 @@ The widget can be styled by the following CSS variables
  - More styles
  - Comments pagination
  - Typescript
+ - Metadata update
  - [Demand based] Nested comments
  - [Demand based] Markdown
  - [Long shot] Pay sats to comment via Lightning integration
@@ -86,3 +87,4 @@ If you want to learn more about nostr, check out [awesome-nostr](https://github.
 
 ## Issues to report to fiatjaf
 1. On publish, if tags prop doesn't exist in event object, getting JS error 'nostx ...??'
+2. 
