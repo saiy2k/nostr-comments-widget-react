@@ -260,7 +260,7 @@ export function NostrComments({relays = []}) {
       console.log('...public key: ', pubkey)
       setPublicKey(pubkey)
 
-      // TODO: give sometime for metadata to load. What if metadata fetch takes 1+ second
+      // TODO: give sometime for metadata to load. BUT what if metadata fetch takes 1+ second
       dispatchUserStatus({type: 'loading'})
       setTimeout(() => {
         dispatchUserStatus({type: 'public_key_received', metadata: metadata, pubkey: pubkey})
@@ -324,6 +324,14 @@ export function NostrComments({relays = []}) {
   async function publishComment(ev) {
     try {
       ev.preventDefault()
+
+      if (comment.length < 3) {
+        setNotices([
+          ...notices,
+          {time: Date.now(), text: 'Comment needs to be atleast 3 characters in length'}
+        ])
+        return;
+      }
       setEditable(false)
 
       let fevent = firstEvent;

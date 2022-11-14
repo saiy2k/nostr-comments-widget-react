@@ -9,7 +9,7 @@ export function NostrAuthReducer(state, action) {
       return 'loading'
 
     case 'noNip07':
-      return 'loading'
+      return 'noNip07'
 
     case 'noPubkey':
       return 'noPubkey'

@@ -68,11 +68,12 @@ The widget can be styled by the following CSS variables
 ```
   
 ## Roadmap
- - User key generation / import, followed by profile setup (Name and avatar)
+ - DONE - User key generation / import, followed by profile setup (Name and avatar)
+ - Code cleanup
  - More styles
  - Comments pagination
  - Typescript
- - Metadata update
+ - Profile edit / Metadata update 
  - [Demand based] Nested comments
  - [Demand based] Markdown
  - [Long shot] Pay sats to comment via Lightning integration
