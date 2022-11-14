@@ -7,7 +7,7 @@ import {queryName} from 'nostr-tools/nip05'
 import Modal from './Modal'
 import './NostrComments.css'
 
-import {normalizeURL, nameFromMetadata} from './util'
+import {normalizeURL, nameFromMetadata, pictureFromMetadata} from './util'
 import {NostrCommentsLoader} from './NostrCommentsLoader'
 import {NostrCommentsNoNip07,
   NostrCommentsNoPubkey,
@@ -220,11 +220,13 @@ export function NostrComments({relays = []}) {
       {isInfoOpen && <Modal setIsOpen={setIsInfoOpen} title="Info">
 
         <span>
-          Commenting as{' '}
+          <b>Commenting as</b> <br/>
           <em style={{color: 'green'}}>
           {nameFromMetadata(metadata[publicKey] || {pubkey: publicKey})} { metadata[publicKey].profile.about && metadata[publicKey].profile.about.length > 0 ? `(${metadata[publicKey].profile.about})`: null }
+          <br/>
+          <img src={pictureFromMetadata(metadata[publicKey])} className="nostr-comments-8015-avatar-image" /> <br/> <br/>
           </em>{' '}
-          using relays <br/>
+          <b>Using relays</b> <br/>
           {relays.map(url => (
             <em key={url} style={{color: 'orange', paddingRight: '5px'}}>
             {url} <br/>
