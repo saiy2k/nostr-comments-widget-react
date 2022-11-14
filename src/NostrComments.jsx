@@ -107,9 +107,13 @@ export function NostrComments({relays = []}) {
   const [wantedMetadata] = useDebounce(wantedMetadataImmediate, 2000)
 
   useEffect(() => {
-    if (!publicKey) return
+    let filter;
+    if (publicKey) {
+      filter = {kinds: [0], authors: wantedMetadata.concat(publicKey)}
+    } else {
+      filter = {kinds: [0], authors: wantedMetadata}
+    }
 
-    const filter = {kinds: [0], authors: wantedMetadata.concat(publicKey)}
     console.log('author filter', filter)
     if (metasubRef.current) {
       // update metadata subscription with new keys
