@@ -2,7 +2,7 @@ import React, {useState, useEffect, useRef} from 'react'
 import useComputedState from 'use-computed-state'
 import {useDebounce} from 'use-debounce'
 import uniq from 'uniq'
-import {generatePrivateKey, getPublicKey, relayPool} from 'nostr-tools'
+import {generatePrivateKey, relayPool} from 'nostr-tools'
 import {queryName} from 'nostr-tools/nip05'
 import Modal from './Modal'
 import './NostrComments.css'
@@ -127,6 +127,15 @@ export function NostrComments({relays = []}) {
             event.profile = JSON.parse(event.content)
             metadata[event.pubkey] = event
             setMetadata({...metadata})
+
+            debugger
+            if (publicKey && event.pubkey === publicKey) {
+              if (event.profile.name && event.profile.about && event.profile.picture) {
+                setUserStatus('allSet')
+              } else {
+                setUserStatus('noProfile')
+              }
+            }
 
             console.log(metadata)
 
@@ -255,7 +264,18 @@ export function NostrComments({relays = []}) {
       const pubkey = await window.nostr.getPublicKey()
       console.log('...public key: ', pubkey)
       setPublicKey(pubkey)
-      setUserStatus('allSet')
+      if (metadata[pubkey] && metadata[pubkey].profile) {
+        const profile = metadata[pubkey].profile;
+        if (profile.name && profile.about && profile.picture) {
+          setUserStatus('allSet')
+        } else {
+          setUserStatus('noProfile')
+        }
+      } else {
+        setUserStatus('loading')
+      }
+
+      // setTimeout to noProfile
     } catch (err) {
       alert('ERROR fetching public key: Pls check if your private key is configured. ' + JSON.stringify(err, Object.getOwnPropertyNames(err)))
       console.error('ERROR fetching public key: Pls check if your private key is configured', JSON.stringify(err, Object.getOwnPropertyNames(err)))
