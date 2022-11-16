@@ -18,7 +18,7 @@ export function NostrAuthReducer(state, action) {
       const pubkey = action.pubkey
       if (action.metadata[pubkey] && action.metadata[pubkey].profile) {
         const profile = action.metadata[pubkey].profile;
-        if (profile.name && profile.about && profile.picture) {
+        if (profile.name && profile.picture) {
           return 'allSet'
         } else {
           return 'noProfile'
@@ -29,7 +29,7 @@ export function NostrAuthReducer(state, action) {
 
     case 'self_meta_received':
       const evt = action.event
-      if (evt.profile.name && evt.profile.about && evt.profile.picture) {
+      if (evt.profile.name && evt.profile.picture) {
         return 'allSet'
       } else {
         return 'noProfile'
@@ -94,6 +94,20 @@ export function NostrCommentsCreateProfile({ onSubmit }) {
 
   function createProfileEvent(ev) {
     console.log(userName, profilePicUrl)
+    if (username.length < 3) {
+      alert('Username should be 3+ characters')
+      return
+    }
+
+    if (profilePicUrl.length < 10) {
+      alert('Enter valid profile pic url')
+      return
+    }
+
+    if (about.length < 5) {
+      alert('Enter valid bio with 5+ characters')
+      return
+    }
     onSubmit({ userName, about, profilePicUrl });
   }
 

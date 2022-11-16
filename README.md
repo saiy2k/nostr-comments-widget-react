@@ -88,4 +88,5 @@ If you want to learn more about nostr, check out [awesome-nostr](https://github.
 
 ## Issues to report to fiatjaf
 1. On publish, if tags prop doesn't exist in event object, getting JS error 'nostx ...??'
-2. 
+2. window.nostr is undefined on page load inside useEffect. I had to add a delay of 500ms to access window.nostr. Any workaround?
+3. 

@@ -85,7 +85,7 @@ export function NostrComments({relays = []}) {
     ;(async () => {
       // TODO: Promise usage for time delay. Rethink
       console.log('window.nostr: ', window.nostr)
-      await new Promise((resolve) => setTimeout(() => resolve(), 100));
+      await new Promise((resolve) => setTimeout(() => resolve(), 500));
       if (window.nostr) {
         dispatchUserStatus({type: 'noPubkey'})
       } else {
